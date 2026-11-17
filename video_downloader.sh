@@ -1,30 +1,37 @@
 #!/bin/bash
 if [ "$1" = "--help" ]; then
 echo "Please read the README.md on GitHub: https://github.com/zoardgodor/bash-video-downloader"
+echo "--help     Show this help message."
+echo "--download  Usage: ./video_downloader.sh --download <URL> Checks the available formats, the user selects one video format and one audio format and downloads the video."
+exit
 fi
 if ! command -v ffmpeg &> /dev/null; then
+echo "Please install ffmpeg. Do you want to install with apt? (y/n)"
+read -r install_ffmpeg
+if [ "$install_ffmpeg" == "y" ]; then
 sudo apt update && sudo apt install ffmpeg -y
+else
+echo "Install ffmpeg with your package manager"
+exit
+fi
 fi
 cd "$(dirname "$0")"
 case "$(uname -m)" in
 x86_64) BIN="yt-dlp_linux";;
 aarch64) BIN="yt-dlp_linux_aarch64";;
-*) echo "Unsupported architecture: $(uname -m)"; exit 1;;
+*) echo "Unsupported architecture: $(uname -m)"; exit;;
 esac
 if [ ! -f "./yt-dlp" ]; then
 echo "Download $BIN from https://github.com/yt-dlp/yt-dlp/releases"
 echo "Rename it to yt-dlp and put it next to this script."
-exit 1
+exit
 fi
 chmod +x ./yt-dlp
-case "$1" in --help)
-echo "--help     Show this help message."
-echo "--download  Usage: ./video_downloader.sh --download <URL> Checks the available formats, the user selects one video format and one audio format and downloads the video."
-;;
---download)
+echo "Everything is ready. Use --help for more information."
+case "$1" in --download)
 if [ -z "$2" ]; then
 echo "Please provide a URL to download."
-exit 1
+exit
 fi
 url="$2"
 echo "Checking available formats for $url..."
@@ -35,7 +42,7 @@ printf "%-6s %-10s %-16s -\n", $1, $2, "audio only"
 else
 printf "%-6s %-10s %-16s %s\n", $1, $2, $3, $4
 }'
-echo "Please enter the format code for the video you want to download: (leave empty for no video)"
+echo "Please enter the format code for the video you want to download: (leave empty for no video or enter 'bestvideo' for the best quality)"
 read -r format
 if [ -n "$format" ]; then
 echo "Do you want to download the audio as well? (y/n)"
@@ -46,19 +53,19 @@ else
 aformat=""
 fi
 else
-echo "Please enter the format code for the audio you want to download: (leave empty for no audio)"
+echo "Please enter the format code for the audio you want to download: (leave empty for no audio or enter 'bestaudio' for the best quality)"
 read -r aformat
 fi
 if [ -z "$format" ] && [ -z "$aformat" ]; then
 echo "No format selected. Exiting."
-exit 1
+exit
 fi
 # echo "Please enter the output filename (without extension) (leave empty for default):"
 # read-r outname
 # if [ -z "$outname" ]; then
 # echo "No otput filename provided. Exiting.
-# exit 1
-outname=$(./yt-dlp --get-filename -f "$format" "$url" 2>/dev/null)
+# exit
+outname=$(./yt-dlp --get-filename -f "bestvideo" "$url" 2>/dev/null)
 echo "Please enter the output directory (leave empty for current directory):"
 read -r outdir
 if [ -z "$outdir" ]; then
